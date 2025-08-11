@@ -43,12 +43,15 @@
   .combo{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(20,24,58,.8);border:1px solid #2a2f63;padding:6px 10px;border-radius:999px;font-weight:700;opacity:0;transition:opacity .2s}
   @media (max-width: 900px){ .container{grid-template-columns:1fr;gap:16px} .board{max-width:100%} }
   #madeWithYigit{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.4px;background:rgba(8,12,32,.55);border:1px solid #2a2f63;border-radius:999px;padding:6px 10px;pointer-events:none;z-index:50}
-.mobile-ctrl{position:absolute;bottom:12px;left:12px;display:none;gap:8px;user-select:none}
+.mobile-ctrl{display:none;gap:8px;user-select:none}
 .mobile-ctrl button{width:56px;height:56px;border-radius:14px;border:1px solid #2a2f63;background:rgba(23,26,55,.85);color:var(--text);font-weight:700;font-size:18px;box-shadow:0 6px 16px rgba(0,0,0,.35);backdrop-filter:blur(6px)}
 .mobile-ctrl button:active{transform:scale(.96)}
 /* Mobilde görünür */
 @media (max-width: 900px){
-  .mobile-ctrl{display:grid;grid-template-areas:" . up ." " left . right" " . down .";grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px 56px}
+  .container{grid-template-columns:1fr;gap:12px}
+  .board{max-width:100%}
+  .mobile-ctrl{display:grid;grid-template-areas:" . up ." " left . right" " . down .";grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px 56px;justify-content:center;margin:12px auto 0}
+  #madeWithYigit{position:static; margin:10px auto 20px; background:transparent; border:none; color:rgba(255,255,255,.6)}
   .btn, select, input{font-size:16px}
 }
 .mobile-ctrl .up{grid-area:up}
@@ -84,12 +87,7 @@
         <div class="edge-glow" id="edgeGlow"></div>
         <div class="combo" id="comboToast">COMBO +5</div>
         <!-- Mobil yön butonları -->
-        <div class="mobile-ctrl" id="mobileCtrl">
-          <button class="up" data-dir="up">↑</button>
-          <button class="left" data-dir="left">←</button>
-          <button class="right" data-dir="right">→</button>
-          <button class="down" data-dir="down">↓</button>
-        </div>
+        
         <canvas id="game" width="600" height="600"></canvas>
         <div class="overlay" id="overlay">
           <div class="card">
@@ -103,6 +101,15 @@
           </div>
         </div>
       </div>
+          </div>
+      <!-- Mobil yön butonları: board'un altında -->
+      <div class="mobile-ctrl" id="mobileCtrl">
+        <button class="up" data-dir="up">↑</button>
+        <button class="left" data-dir="left">←</button>
+        <button class="right" data-dir="right">→</button>
+        <button class="down" data-dir="down">↓</button>
+      </div>
+      <div id="madeWithYigit">Made with Yiğit</div>
     </main>
   </div>
 
@@ -273,6 +280,5 @@
   reset();
 })();
 </script>
-  <div id="madeWithYigit">Made with Yiğit</div>
 </body>
 </html>
