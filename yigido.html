@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Yılan Oyunu !</title>
+<style>
+  :root{ --bg:#0f1226; --grid:#1b2042; --board:#0b0f25; --snake:#2fe38a; --snake2:#22c37a; --snake-head:#7bf0b3; --food:#ff6b6b; --text:#e6e7ef; --accent:#7c5cff; }
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#12163a,transparent),radial-gradient(1200px 600px at 110% 110%,#12163a,transparent),var(--bg);color:var(--text);font:500 15px/1.4 Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;min-height:100vh}
+  .container{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;min-height:100vh;box-sizing:border-box;align-items:start;max-width:1280px;margin:0 auto}
+  .sidebar{display:flex;flex-direction:column;gap:14px}
+  .game-area{display:flex;align-items:flex-start;justify-content:center}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#5e3bee);box-shadow:0 6px 18px rgba(124,92,255,.45);display:grid;place-items:center;color:#fff;font-weight:800}
+  .brand h1{font-size:18px;margin:0}
+  .panel{display:grid;grid-template-columns:1fr;gap:10px;align-items:start}
+  .chip{background:#171a37;border:1px solid #2a2f63;color:var(--text);padding:6px 10px;border-radius:10px;display:flex;align-items:center;gap:8px}
+  .btn,select,input[type="color"],input[type="checkbox"]{appearance:none;border:1px solid #2a2f63;background:#171a37;color:var(--text);padding:8px 12px;border-radius:12px;cursor:pointer;transition:.2s}
+  input[type="color"]{padding:4px;width:48px;height:36px}
+  input[type="checkbox"]{width:46px;height:28px;border-radius:16px;position:relative;display:inline-block}
+  input[type="checkbox"]:checked{background:#2b8a3e}
+  input[type="checkbox"]::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#e6e7ef;transition:transform .2s ease}
+  input[type="checkbox"]:checked::after{transform:translateX(18px)}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#5e3bee);border:none}
+  .field-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#171a37;border:1px solid #2a2f63;border-radius:10px;padding:8px 10px}
+  .field-row label{font-size:13px;opacity:.9}
+  .panel .btn{width:100%}
+  .board{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35);border:1px solid #2a2f63;background:var(--board);width:100%;max-width:min(92vh,980px);aspect-ratio:1/1}
+  .board.grid{background:linear-gradient(transparent 23px,var(--grid) 24px),linear-gradient(90deg,transparent 23px,var(--grid) 24px),var(--board);background-size:24px 24px,24px 24px,cover}
+  .board.gradientA{background:radial-gradient(1000px 600px at 20% 10%,#0f1638,#0b0f25 55%),radial-gradient(900px 700px at 120% 120%,#0f1638,transparent)}
+  .board.gradientB{background:linear-gradient(145deg,#0b0f25 0%,#14213d 70%,#0b0f25 100%)}
+  .board.neon{background:radial-gradient(1200px 600px at 50% 0%,#101341,transparent),radial-gradient(900px 800px at 50% 100%,#0a0c2b,#0b0f25)}
+  .board.forest{background:linear-gradient(180deg,#0f2f2a,#0b1d1a 60%,#0b0f25)}
+  .board.space{background:radial-gradient(800px 600px at 20% 30%,#0c1028,transparent),radial-gradient(900px 800px at 80% 70%,#141a3a,#060816)}
+  canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+  .edge-glow{position:absolute;inset:0;pointer-events:none}
+  .overlay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+  .card{pointer-events:auto;background:rgba(8,12,32,.78);backdrop-filter:blur(10px);border:1px solid #2a2f63;border-radius:16px;padding:18px;text-align:center;max-width:80%}
+  .title{font-size:20px;margin:0 0 8px}
+  .muted{opacity:.85}
+  .combo{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(20,24,58,.8);border:1px solid #2a2f63;padding:6px 10px;border-radius:999px;font-weight:700;opacity:0;transition:opacity .2s}
+  @media (max-width: 900px){ .container{grid-template-columns:1fr;gap:16px} .board{max-width:100%} }
+  #madeWithYigit{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.4px;background:rgba(8,12,32,.55);border:1px solid #2a2f63;border-radius:999px;padding:6px 10px;pointer-events:none;z-index:50}
+</style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">Y</div><h1>İyi Eğlenceler</h1></div>
+      <div class="panel">
+        <div class="chip">Skor: <strong id="score">0</strong></div>
+        <div class="chip">En İyi: <strong id="best">0</strong></div>
+        <div class="field-row"><label for="bg-select">Tema</label><select id="bg-select"><option value="grid" selected>Retro Izgara</option><option value="plain">Düz</option><option value="gradientA">Gradyan A</option><option value="gradientB">Gradyan B</option><option value="neon">Neon</option><option value="forest">Orman</option><option value="space">Uzay</option></select></div>
+        <div class="field-row"><label for="snakeColor">Yılan Rengi</label><input type="color" id="snakeColor" value="#2fe38a" /></div>
+        <div class="field-row"><label for="foodColor">Yem Rengi</label><input type="color" id="foodColor" value="#ff6b6b" /></div>
+        <div class="field-row"><label for="wall-select">Duvar Modu</label><select id="wall-select"><option value="wrap" selected>Geçişli (Wrap)</option><option value="solid">Çarpışmalı</option></select></div>
+        <div class="field-row"><label for="pattern-select">Yılan Deseni</label><select id="pattern-select"><option value="solid" selected>Düz</option><option value="stripes">Çizgili</option><option value="dots">Noktalı</option><option value="pixel">Piksel</option></select></div>
+        <div class="field-row"><label for="food-shape-select">Yem Şekli</label><select id="food-shape-select"><option value="dynamic" selected>Dinamik</option><option value="circle">Daire</option><option value="square">Kare</option><option value="diamond">Elmas</option><option value="star">Yıldız</option><option value="heart">Kalp</option></select></div>
+        <div class="field-row"><label for="difficulty-select">Zorluk</label><select id="difficulty-select"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option></select></div>
+        <div class="field-row"><label for="map-select">Harita</label><select id="map-select"><option value="none" selected>Düz</option><option value="plus">Artı</option><option value="box">Kutu</option><option value="maze1">Labirent (Basit)</option></select></div>
+        <div class="field-row"><label for="guideToggle">Kılavuz Işık</label><input type="checkbox" id="guideToggle" checked /></div>
+        <button class="btn" id="btn-pause">Duraklat</button>
+        <button class="btn" id="btn-restart">Yeniden Başlat</button>
+        <button class="btn primary" id="btn-start">Başlat</button>
+      </div>
+    </aside>
+
+    <main class="game-area">
+      <div class="board grid" id="board">
+        <div class="edge-glow" id="edgeGlow"></div>
+        <div class="combo" id="comboToast">COMBO +5</div>
+        <canvas id="game" width="600" height="600"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="card">
+            <h2 class="title">Başlamak için <kbd>Enter</kbd> veya <em>Başlat</em>'a bas</h2>
+            <div class="muted">Ok tuşları / WASD ile yön ver. Mobilde ok tuşlarını kullan.</div>
+            <div class="muted" style="margin-top:6px">Özel yemler: Bonus, Hızlanma, Yavaşlama, Kısaltma, Sürpriz.</div>
+            <div class="row" style="margin-top:12px">
+              <button class="btn primary" id="start-overlay">Başlat</button>
+              <button class="btn" id="how">Nasıl oynanır?</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const overlay = document.getElementById('overlay');
+  const btnStartMain = document.getElementById('btn-start');
+  const btnStartOverlay = document.getElementById('start-overlay');
+  const btnRestart = document.getElementById('btn-restart');
+  const btnPause = document.getElementById('btn-pause');
+  const btnHow = document.getElementById('how');
+  const boardEl = document.getElementById('board');
+  const edgeGlow = document.getElementById('edgeGlow');
+  const comboToast = document.getElementById('comboToast');
+
+  const bgSelect = document.getElementById('bg-select');
+  const snakeColorInput = document.getElementById('snakeColor');
+  const foodColorInput = document.getElementById('foodColor');
+  const wallSelect = document.getElementById('wall-select');
+  const soundToggle = document.getElementById('soundToggle');
+  const patternSelect = document.getElementById('pattern-select');
+  const foodShapeSelect = document.getElementById('food-shape-select');
+  const difficultySelect = document.getElementById('difficulty-select');
+  const mapSelect = document.getElementById('map-select');
+  const guideToggle = document.getElementById('guideToggle');
+
+  const gridSize = 24; const cells = canvas.width / gridSize; // 25
+  let snake, dir, nextDir, food, score, best=0, running=false, paused=false, baseTick=140, loopId, wallMode='wrap', soundOn=true, surpriseOn=true, wasGameOver=false;
+  let particles=[]; let speedDelta=0, speedTimer=0; let obstacles=[]; let eatTimes=[]; let audioCtx=null;
+
+  try{ best=parseInt(localStorage.getItem('yigido_snake_best')||'0',10)||0; }catch{}
+  bestEl.textContent = best;
+
+  function initAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+  function playHamm(){ if(!audioCtx||!soundOn) return; const now=audioCtx.currentTime; const osc=audioCtx.createOscillator(); const gain=audioCtx.createGain(); osc.type='square'; osc.frequency.setValueAtTime(220,now); osc.frequency.exponentialRampToValueAtTime(150,now+0.08); gain.gain.setValueAtTime(0.001,now); gain.gain.exponentialRampToValueAtTime(0.22,now+0.01); gain.gain.exponentialRampToValueAtTime(0.00012,now+0.14); osc.connect(gain).connect(audioCtx.destination); osc.start(now); osc.stop(now+0.15); }
+
+  function setCSSVar(name,val){ document.documentElement.style.setProperty(name,val);} 
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+  function hexToRgb(hex){ const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex); if(!m) return {r:47,g:227,b:138}; return {r:parseInt(m[1],16),g:parseInt(m[2],16),b:parseInt(m[3],16)}; }
+  function rgbToHex(r,g,b){ return `#${[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('')}`; }
+  function adjust(hex,amt){ const {r,g,b}=hexToRgb(hex); const rr=clamp(r+amt,0,255), gg=clamp(g+amt,0,255), bb=clamp(b+amt,0,255); return rgbToHex(rr,gg,bb);} 
+  function applySnakeColor(hex){ setCSSVar('--snake',adjust(hex,-10)); setCSSVar('--snake2',adjust(hex,-25)); setCSSVar('--snake-head',adjust(hex,+30)); patternCache={}; }
+  function applyFoodColor(hex){ setCSSVar('--food',hex); }
+
+  // patterns
+  let patternCache={}; function getPattern(kind){ const key=kind+'|'+getComputedStyle(document.documentElement).getPropertyValue('--snake').trim(); if(patternCache[key]) return patternCache[key]; const off=document.createElement('canvas'); off.width=off.height=12; const c=off.getContext('2d'); const base1=getComputedStyle(document.documentElement).getPropertyValue('--snake').trim(); const base2=getComputedStyle(document.documentElement).getPropertyValue('--snake2').trim(); c.clearRect(0,0,12,12); if(kind==='stripes'){ c.fillStyle=base1; c.fillRect(0,0,12,12); c.fillStyle=base2; c.fillRect(0,0,12,6); } else if(kind==='dots'){ c.fillStyle=base1; c.fillRect(0,0,12,12); c.fillStyle=base2; c.beginPath(); c.arc(3,3,2,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(9,9,2,0,Math.PI*2); c.fill(); } else if(kind==='pixel'){ c.fillStyle=base1; c.fillRect(0,0,12,12); c.fillStyle=base2; c.fillRect(0,0,6,6); c.fillRect(6,6,6,6); } const pat=ctx.createPattern(off,'repeat'); patternCache[key]=pat; return pat; }
+
+  function spawnParticles(cx,cy,color){ for(let i=0;i<10;i++){ const ang=Math.random()*Math.PI*2; const spd=1+Math.random()*2.5; particles.push({x:cx,y:cy,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,life:28,alpha:1,color}); } }
+  function updateParticles(){ particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy*=0.98; p.vx*=0.98; p.life--; p.alpha=p.life/28; }); particles=particles.filter(p=>p.life>0); }
+  function drawParticles(){ ctx.save(); particles.forEach(p=>{ ctx.globalAlpha=p.alpha*0.8; ctx.fillStyle=p.color; ctx.fillRect(p.x-2,p.y-2,4,4); }); ctx.restore(); }
+
+  function drawRoundedCell(x,y,w,h,r,fill,stroke){ const px=x*gridSize+1, py=y*gridSize+1, ww=w-2, hh=h-2; ctx.beginPath(); const rr=Math.min(r,ww/2,hh/2); ctx.moveTo(px+rr,py); ctx.arcTo(px+ww,py,px+ww,py+hh,rr); ctx.arcTo(px+ww,py+hh,px,py+hh,rr); ctx.arcTo(px,py+hh,px,py,rr); ctx.arcTo(px,py,px+ww,py,rr); ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke(); } }
+  function drawEye(cx,cy){ ctx.fillStyle='#0b0f25'; ctx.beginPath(); ctx.arc(cx,cy,2,0,Math.PI*2); ctx.fill(); }
+
+  function drawRoundRect(x,y,w,h,rad){ ctx.beginPath(); const r=rad; ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill(); }
+  function drawStar(x,y,r,points,inner){ const step=Math.PI/points; ctx.beginPath(); for(let i=0;i<2*points;i++){ const rr=i%2===0?r:r*inner; ctx.lineTo(x+rr*Math.cos(i*step), y+rr*Math.sin(i*step)); } ctx.closePath(); ctx.fill(); }
+  function drawHeart(x,y,r){ const s=r/1.4; ctx.beginPath(); ctx.moveTo(0,-s*0.5); ctx.bezierCurveTo(s,-s*1.2,s*1.4,0,0,s); ctx.bezierCurveTo(-s*1.4,0,-s,-s*1.2,0,-s*0.5); ctx.closePath(); ctx.fill(); }
+
+  function foodColorByType(type){ if(type==='bonus') return '#ffd54a'; if(type==='speedUp') return '#4fd1ff'; if(type==='slowDown') return '#a78bfa'; if(type==='shrink') return '#ff8a4f'; if(type==='surprise'){ const t=(performance.now()/20)%360; return `hsl(${t}, 95%, 60%)`; } return getComputedStyle(document.documentElement).getPropertyValue('--food'); }
+
+  function drawFood(){ const color=foodColorByType(food.type); const cx=food.x*gridSize+gridSize/2; const cy=food.y*gridSize+gridSize/2; const r=gridSize*0.42*(0.92+0.08*Math.sin(performance.now()/220)); ctx.save(); ctx.translate(cx,cy); food.angle+=0.05; ctx.rotate(food.angle); if(food.type==='surprise'){ ctx.save(); ctx.rotate(-food.angle); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.globalAlpha=0.9; ctx.beginPath(); ctx.arc(0,0,r*1.1,0,Math.PI*2); ctx.stroke(); ctx.restore(); ctx.shadowColor=color; ctx.shadowBlur=12; } ctx.fillStyle=color; ctx.strokeStyle='rgba(255,255,255,.15)'; if(food.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill(); } else if(food.shape==='square'){ drawRoundRect(-r*0.9,-r*0.9,r*1.8,r*1.8,4); } else if(food.shape==='diamond'){ ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(r,0); ctx.lineTo(0,r); ctx.lineTo(-r,0); ctx.closePath(); ctx.fill(); } else if(food.shape==='star'){ drawStar(0,0,r,5,0.5); } else if(food.shape==='heart'){ drawHeart(0,0,r); } if(food.shape!=='circle'){ ctx.stroke(); } if(food.type==='surprise'){ ctx.rotate(-food.angle); ctx.fillStyle='#0b0f25'; ctx.font=`${Math.floor(gridSize*0.8)}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',0,0); } ctx.restore(); }
+
+  function buildMap(kind){ const arr=[]; if(kind==='plus'){ for(let i=5;i<cells-5;i++){ arr.push({x:Math.floor(cells/2), y:i}); arr.push({x:i, y:Math.floor(cells/2)}); } } else if(kind==='box'){ for(let x=4;x<cells-4;x++){ arr.push({x:x,y:4}); arr.push({x:x,y:cells-5}); } for(let y=4;y<cells-4;y++){ arr.push({x:4,y:y}); arr.push({x:cells-5,y:y}); } } else if(kind==='maze1'){ const mid=Math.floor(cells/2); for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid-6}); } for(let x=3;x<cells-3;x+=2){ arr.push({x:x,y:mid}); } for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid+6}); } } return arr; }
+  function drawObstacles(){ if(!obstacles.length) return; ctx.save(); obstacles.forEach(o=>{ drawRoundedCell(o.x,o.y,gridSize,gridSize,6,'rgba(124,92,255,.15)','rgba(124,92,255,.25)'); }); ctx.restore(); }
+  function drawEdgeGuide(){ if(!guideToggle.checked){ edgeGlow.style.boxShadow='none'; return; } const h=snake?snake[0]:{x:12,y:12}; const distLeft=h.x, distRight=cells-1-h.x, distTop=h.y, distBottom=cells-1-h.y; const minDist=Math.min(distLeft,distRight,distTop,distBottom); const strength=1-Math.min(1,minDist/8); const blur=40+Math.floor(strength*80); const alpha=0.25+strength*0.45; edgeGlow.style.boxShadow=`inset 0 0 ${blur}px ${Math.floor(8+strength*12)}px rgba(124,92,255,${alpha})`; }
+
+  function placeFood(){ let x,y,collision,blocked; do{ x=Math.floor(Math.random()*cells); y=Math.floor(Math.random()*cells); collision=snake.some(s=>s.x===x&&s.y===y); blocked=obstacles.some(o=>o.x===x&&o.y===y); }while(collision||blocked); const shapeSel=foodShapeSelect.value; const shape=shapeSel==='dynamic'?randomFoodShape():shapeSel; food={x,y,type:pickFoodType(),shape,angle:0}; }
+  function randomFoodShape(){ const shapes=['circle','square','diamond','star','heart']; return shapes[Math.floor(Math.random()*shapes.length)]; }
+
+  function getFoodTypes(){ const w={ bonus:12, speedUp:6, slowDown:6, shrink:6, surprise:8 }; const baseNormal=Math.max(10,100-(w.bonus+w.speedUp+w.slowDown+w.shrink+(surpriseOn?w.surprise:0))); const arr=[ {type:'normal',weight:baseNormal},{type:'bonus',weight:w.bonus},{type:'speedUp',weight:w.speedUp},{type:'slowDown',weight:w.slowDown},{type:'shrink',weight:w.shrink} ]; if(surpriseOn) arr.push({type:'surprise',weight:w.surprise}); return arr; }
+  function pickFoodType(){ const POOL=getFoodTypes(); const total=POOL.reduce((a,b)=>a+b.weight,0); let r=Math.random()*total; for(const f of POOL){ r-=f.weight; if(r<=0) return f.type; } return 'normal'; }
+
+  function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); drawEdgeGuide(); drawObstacles(); drawFood(); const base1=getComputedStyle(document.documentElement).getPropertyValue('--snake'); const base2=getComputedStyle(document.documentElement).getPropertyValue('--snake2'); const headCol=getComputedStyle(document.documentElement).getPropertyValue('--snake-head'); const patternMode=patternSelect.value; snake.forEach((s,i)=>{ if(i===0){ drawRoundedCell(s.x,s.y,gridSize,gridSize,7,headCol,'rgba(255,255,255,.08)'); const cx=s.x*gridSize+gridSize/2, cy=s.y*gridSize+gridSize/2, off=5; if(dir.x===1){ drawEye(cx+off,cy-3); drawEye(cx+off,cy+3);} else if(dir.x===-1){ drawEye(cx-off,cy-3); drawEye(cx-off,cy+3);} else if(dir.y===1){ drawEye(cx-3,cy+off); drawEye(cx+3,cy+off);} else { drawEye(cx-3,cy-off); drawEye(cx+3,cy-off);} } else { let fill=null; if(patternMode==='solid'){ const px=s.x*gridSize+1, py=s.y*gridSize+1; const grad=ctx.createLinearGradient(px,py,px+gridSize,py+gridSize); grad.addColorStop(0,base2.trim()); grad.addColorStop(1,base1.trim()); fill=grad; } else { fill=getPattern(patternMode);} drawRoundedCell(s.x,s.y,gridSize,gridSize,6,fill,'rgba(255,255,255,.05)'); } }); drawParticles(); }
+
+  function step(){ if(!running||paused) return; if(speedTimer>0){ speedTimer--; if(speedTimer===0) speedDelta=0; } if((nextDir.x!==-dir.x||nextDir.y!==-dir.y)) dir=nextDir; const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y}; if(wallMode==='wrap'){ if(head.x<0) head.x=cells-1; else if(head.x>=cells) head.x=0; if(head.y<0) head.y=cells-1; else if(head.y>=cells) head.y=0; } else { if(head.x<0||head.y<0||head.x>=cells||head.y>=cells) return gameOver(); } if(snake.some((s,i)=>i>0&&s.x===head.x&&s.y===head.y)) return gameOver(); if(obstacles.some(o=>o.x===head.x&&o.y===head.y)) return gameOver(); snake.unshift(head); if(head.x===food.x&&head.y===food.y){ const now=performance.now(); eatTimes=eatTimes.filter(t=>now-t<10000); eatTimes.push(now); const cx=head.x*gridSize+gridSize/2, cy=head.y*gridSize+gridSize/2; const ftype=food.type; playHamm(); if(ftype==='normal'){ score++; baseTick=Math.max(60,baseTick-4);} else if(ftype==='bonus'){ score+=5; baseTick=Math.max(60,baseTick-6);} else if(ftype==='speedUp'){ score+=2; speedDelta=-50; speedTimer=40;} else if(ftype==='slowDown'){ score+=2; speedDelta=+60; speedTimer=40;} else if(ftype==='shrink'){ score+=3; if(snake.length>5) snake.splice(-2,2);} else if(ftype==='surprise'){ score++; baseTick=Math.max(60,baseTick-4);} if(eatTimes.length>=3){ score+=5; comboToast.style.opacity=1; setTimeout(()=>{ comboToast.style.opacity=0; }, 800); eatTimes=[]; } scoreEl.textContent=score; spawnParticles(cx,cy,foodColorByType(ftype)); placeFood(); } else { snake.pop(); } updateParticles(); scheduleNext(); draw(); }
+
+  function scheduleNext(){ clearTimeout(loopId); const tick=Math.max(40,baseTick+speedDelta); loopId=setTimeout(step,tick); }
+  function start(){ if(running) return; if(wasGameOver){ reset(); wasGameOver=false; } running=true; paused=false; overlay.style.display='none'; initAudio(); scheduleNext(); }
+  function pause(){ if(!running) return; paused=!paused; btnPause.textContent=paused?'Devam Et':'Duraklat'; if(!paused) scheduleNext(); }
+  function restart(){ clearTimeout(loopId); reset(); overlay.style.display='grid'; }
+  function gameOver(){ running=false; clearTimeout(loopId); if(score>best){ best=score; bestEl.textContent=best; try{ localStorage.setItem('yigido_snake_best', String(best)); }catch{} } wasGameOver=true; overlay.style.display='grid'; overlay.querySelector('.title').innerHTML=`Oyun Bitti! Skor: <strong>${score}</strong>`; }
+
+  const keyMap={ ArrowUp:{x:0,y:-1}, KeyW:{x:0,y:-1}, ArrowDown:{x:0,y:1}, KeyS:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, KeyA:{x:-1,y:0}, ArrowRight:{x:1,y:0}, KeyD:{x:1,y:0} };
+  window.addEventListener('keydown',(e)=>{ if(!audioCtx) initAudio(); if(e.code in keyMap){ e.preventDefault(); nextDir=keyMap[e.code]; } if(e.code==='Enter'){ if(!running) start(); } if(e.code==='Space'){ e.preventDefault(); pause(); } },{passive:false});
+
+  function applyBg(mode){ boardEl.className='board'; if(mode==='grid') boardEl.classList.add('grid'); if(mode==='gradientA') boardEl.classList.add('gradientA'); if(mode==='gradientB') boardEl.classList.add('gradientB'); if(mode==='neon') boardEl.classList.add('neon'); if(mode==='forest') boardEl.classList.add('forest'); if(mode==='space') boardEl.classList.add('space'); }
+  bgSelect.addEventListener('change',()=>{ applyBg(bgSelect.value); try{ localStorage.setItem('yigido_snake_bg', bgSelect.value); }catch{} });
+
+  function saveColors(){ try{ localStorage.setItem('yigido_snake_color', snakeColorInput.value); localStorage.setItem('yigido_food_color', foodColorInput.value);}catch{} }
+  snakeColorInput.addEventListener('input',()=>{ applySnakeColor(snakeColorInput.value); saveColors(); });
+  foodColorInput.addEventListener('input',()=>{ applyFoodColor(foodColorInput.value); saveColors(); });
+
+  function applyWallMode(mode){ wallMode=mode; try{ localStorage.setItem('yigido_wall_mode', mode); }catch{} }
+  wallSelect.addEventListener('change',()=>{ applyWallMode(wallSelect.value); });
+
+  patternSelect.addEventListener('change',()=>{ try{ localStorage.setItem('yigido_pattern', patternSelect.value);}catch{} });
+  foodShapeSelect.addEventListener('change',()=>{ try{ localStorage.setItem('yigido_food_shape', foodShapeSelect.value);}catch{} });
+  difficultySelect.addEventListener('change',()=>{ try{localStorage.setItem('yigido_diff',difficultySelect.value);}catch{} reset(); });
+  mapSelect.addEventListener('change',()=>{ try{localStorage.setItem('yigido_map',mapSelect.value);}catch{} reset(); });
+  guideToggle.addEventListener('change',()=>{ try{localStorage.setItem('yigido_guide', guideToggle.checked?'1':'0');}catch{} });
+
+  function applyDifficulty(level){ if(level==='easy'){ baseTick=160; } else if(level==='hard'){ baseTick=110; } else { baseTick=140; } }
+
+  function reset(){
+    // Engelleri kur ve güvenli spawn bul
+    obstacles = buildMap(mapSelect.value);
+    function isBlocked(x,y){ return obstacles.some(o=>o.x===x && o.y===y); }
+    function findSafeSpawn(){
+      const needClear = (wallMode==='solid');
+      for(let tries=0; tries<800; tries++){
+        let x = Math.floor(Math.random()*cells);
+        let y = Math.floor(Math.random()*cells);
+        const okBounds = !needClear || (x-2>=0 && x<cells && y>=0 && y<cells);
+        if(!okBounds) continue;
+        if(isBlocked(x,y) || isBlocked(x-1,y) || isBlocked(x-2,y)) continue;
+        return {x,y};
+      }
+      for(let yy=0; yy<cells; yy++){
+        for(let xx=2; xx<cells; xx++){
+          if(!isBlocked(xx,yy) && !isBlocked(xx-1,yy) && !isBlocked(xx-2,yy)){
+            return {x:xx,y:yy};
+          }
+        }
+      }
+      return {x:12,y:12};
+    }
+    const spawn = findSafeSpawn();
+    snake = [ {x:spawn.x, y:spawn.y}, {x:spawn.x-1, y:spawn.y}, {x:spawn.x-2, y:spawn.y} ];
+    dir = {x:1,y:0}; nextDir = {x:1,y:0};
+    score = 0; scoreEl.textContent = score;
+    applyDifficulty(difficultySelect.value);
+    speedDelta = 0; speedTimer = 0; particles = [];
+    paused = false; running = false; wasGameOver = false;
+    placeFood(); draw();
+  }
+
+  try{ const savedBg=localStorage.getItem('yigido_snake_bg'); if(savedBg){ bgSelect.value=savedBg; applyBg(savedBg);} else { applyBg('grid'); } const savedSnake=localStorage.getItem('yigido_snake_color'); if(savedSnake){ snakeColorInput.value=savedSnake; } const savedFood=localStorage.getItem('yigido_food_color'); if(savedFood){ foodColorInput.value=savedFood; } const savedWall=localStorage.getItem('yigido_wall_mode'); if(savedWall){ wallSelect.value=savedWall; } const savedPattern=localStorage.getItem('yigido_pattern'); if(savedPattern){ patternSelect.value=savedPattern; } const savedFoodShape=localStorage.getItem('yigido_food_shape'); if(savedFoodShape){ foodShapeSelect.value=savedFoodShape; } const savedDiff=localStorage.getItem('yigido_diff'); if(savedDiff){ difficultySelect.value=savedDiff; } const savedMap=localStorage.getItem('yigido_map'); if(savedMap){ mapSelect.value=savedMap; } const savedGuide=localStorage.getItem('yigido_guide'); if(savedGuide!==null){ guideToggle.checked = savedGuide==='1'; } }catch{}
+  applySnakeColor(snakeColorInput.value); applyFoodColor(foodColorInput.value); applyWallMode(wallSelect.value); obstacles=buildMap(mapSelect.value);
+
+  btnStartMain.addEventListener('click',start); btnStartOverlay.addEventListener('click',start); btnRestart.addEventListener('click',()=>{ restart(); }); btnPause.addEventListener('click',()=>{ pause(); }); btnHow.addEventListener('click',()=>{ alert('Amaç: Yemi yiyerek büyümek. Zorluk seçimi hızı etkiler. Haritalarda engellere çarparsan oyun biter. Sürpriz yem ve partikül efektleri varsayılan olarak açıktır. 10 sn içinde 3 yem = COMBO +5.'); });
+
+  // İlk kurulum
+  reset();
+})();
+</script>
+  <div id="madeWithYigit">Yiğit Özenateş Tarafından Yapılmıştır</div>
+</body>
+</html>
