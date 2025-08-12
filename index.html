@@ -74,8 +74,9 @@
         <div class="field-row"><label for="pattern-select">Yılan Deseni</label><select id="pattern-select"><option value="solid" selected>Düz</option><option value="stripes">Çizgili</option><option value="dots">Noktalı</option><option value="pixel">Piksel</option></select></div>
         <div class="field-row"><label for="food-shape-select">Yem Şekli</label><select id="food-shape-select"><option value="dynamic" selected>Dinamik</option><option value="circle">Daire</option><option value="square">Kare</option><option value="diamond">Elmas</option><option value="star">Yıldız</option><option value="heart">Kalp</option></select></div>
         <div class="field-row"><label for="difficulty-select">Zorluk</label><select id="difficulty-select"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option></select></div>
-        <div class="field-row"><label for="map-select">Harita</label><select id="map-select"><option value="none" selected>Düz</option><option value="plus">Artı</option><option value="box">Kutu</option><option value="maze1">Labirent (Basit)</option></select></div>
+        <div class="field-row"><label for="map-select">Harita</label><select id="map-select"><option value="none" selected>Düz</option><option value="plus">Artı</option><option value="maze1">Labirent (Basit)</option></select></div>
         <div class="field-row"><label for="guideToggle">Kılavuz Işık</label><input type="checkbox" id="guideToggle" checked /></div>
+        <div class="field-row"><label for="soundToggle">Yem Sesi</label><input type="checkbox" id="soundToggle" checked /></div>
         <button class="btn" id="btn-pause">Duraklat</button>
         <button class="btn" id="btn-restart">Yeniden Başlat</button>
         <button class="btn primary" id="btn-start">Başlat</button>
@@ -101,7 +102,6 @@
           </div>
         </div>
       </div>
-          </div>
       <!-- Mobil yön butonları: board'un altında -->
       <div class="mobile-ctrl" id="mobileCtrl">
         <button class="up" data-dir="up">↑</button>
@@ -177,7 +177,7 @@
 
   function drawFood(){ const color=foodColorByType(food.type); const cx=food.x*gridSize+gridSize/2; const cy=food.y*gridSize+gridSize/2; const r=gridSize*0.42*(0.92+0.08*Math.sin(performance.now()/220)); ctx.save(); ctx.translate(cx,cy); food.angle+=0.05; ctx.rotate(food.angle); if(food.type==='surprise'){ ctx.save(); ctx.rotate(-food.angle); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.globalAlpha=0.9; ctx.beginPath(); ctx.arc(0,0,r*1.1,0,Math.PI*2); ctx.stroke(); ctx.restore(); ctx.shadowColor=color; ctx.shadowBlur=12; } ctx.fillStyle=color; ctx.strokeStyle='rgba(255,255,255,.15)'; if(food.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill(); } else if(food.shape==='square'){ drawRoundRect(-r*0.9,-r*0.9,r*1.8,r*1.8,4); } else if(food.shape==='diamond'){ ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(r,0); ctx.lineTo(0,r); ctx.lineTo(-r,0); ctx.closePath(); ctx.fill(); } else if(food.shape==='star'){ drawStar(0,0,r,5,0.5); } else if(food.shape==='heart'){ drawHeart(0,0,r); } if(food.shape!=='circle'){ ctx.stroke(); } if(food.type==='surprise'){ ctx.rotate(-food.angle); ctx.fillStyle='#0b0f25'; ctx.font=`${Math.floor(gridSize*0.8)}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',0,0); } ctx.restore(); }
 
-  function buildMap(kind){ const arr=[]; if(kind==='plus'){ for(let i=5;i<cells-5;i++){ arr.push({x:Math.floor(cells/2), y:i}); arr.push({x:i, y:Math.floor(cells/2)}); } } else if(kind==='box'){ for(let x=4;x<cells-4;x++){ arr.push({x:x,y:4}); arr.push({x:x,y:cells-5}); } for(let y=4;y<cells-4;y++){ arr.push({x:4,y:y}); arr.push({x:cells-5,y:y}); } } else if(kind==='maze1'){ const mid=Math.floor(cells/2); for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid-6}); } for(let x=3;x<cells-3;x+=2){ arr.push({x:x,y:mid}); } for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid+6}); } } return arr; }
+  function buildMap(kind){ const arr=[]; if(kind==='plus'){ for(let i=5;i<cells-5;i++){ arr.push({x:Math.floor(cells/2), y:i}); arr.push({x:i, y:Math.floor(cells/2)}); } } else if(kind==='maze1'){ const mid=Math.floor(cells/2); for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid-6}); } for(let x=3;x<cells-3;x+=2){ arr.push({x:x,y:mid}); } for(let x=2;x<cells-2;x+=2){ arr.push({x:x,y:mid+6}); } } return arr; }
   function drawObstacles(){ if(!obstacles.length) return; ctx.save(); obstacles.forEach(o=>{ drawRoundedCell(o.x,o.y,gridSize,gridSize,6,'rgba(124,92,255,.15)','rgba(124,92,255,.25)'); }); ctx.restore(); }
   function drawEdgeGuide(){ if(!guideToggle.checked){ edgeGlow.style.boxShadow='none'; return; } const h=snake?snake[0]:{x:12,y:12}; const distLeft=h.x, distRight=cells-1-h.x, distTop=h.y, distBottom=cells-1-h.y; const minDist=Math.min(distLeft,distRight,distTop,distBottom); const strength=1-Math.min(1,minDist/8); const blur=40+Math.floor(strength*80); const alpha=0.25+strength*0.45; edgeGlow.style.boxShadow=`inset 0 0 ${blur}px ${Math.floor(8+strength*12)}px rgba(124,92,255,${alpha})`; }
 
@@ -235,6 +235,11 @@
   difficultySelect.addEventListener('change',()=>{ try{localStorage.setItem('yigido_diff',difficultySelect.value);}catch{} reset(); });
   mapSelect.addEventListener('change',()=>{ try{localStorage.setItem('yigido_map',mapSelect.value);}catch{} reset(); });
   guideToggle.addEventListener('change',()=>{ try{localStorage.setItem('yigido_guide', guideToggle.checked?'1':'0');}catch{} });
+  soundToggle.addEventListener('change',()=>{ 
+    soundOn = soundToggle.checked; 
+    try{ localStorage.setItem('yigido_snake_sound', soundOn?'1':'0'); }catch{} 
+    if(soundOn && !audioCtx) initAudio(); 
+  });
 
   function applyDifficulty(level){ if(level==='easy'){ baseTick=160; } else if(level==='hard'){ baseTick=110; } else { baseTick=140; } }
 
@@ -271,7 +276,9 @@
     placeFood(); draw();
   }
 
-  try{ const savedBg=localStorage.getItem('yigido_snake_bg'); if(savedBg){ bgSelect.value=savedBg; applyBg(savedBg);} else { applyBg('grid'); } const savedSnake=localStorage.getItem('yigido_snake_color'); if(savedSnake){ snakeColorInput.value=savedSnake; } const savedFood=localStorage.getItem('yigido_food_color'); if(savedFood){ foodColorInput.value=savedFood; } const savedWall=localStorage.getItem('yigido_wall_mode'); if(savedWall){ wallSelect.value=savedWall; } const savedPattern=localStorage.getItem('yigido_pattern'); if(savedPattern){ patternSelect.value=savedPattern; } const savedFoodShape=localStorage.getItem('yigido_food_shape'); if(savedFoodShape){ foodShapeSelect.value=savedFoodShape; } const savedDiff=localStorage.getItem('yigido_diff'); if(savedDiff){ difficultySelect.value=savedDiff; } const savedMap=localStorage.getItem('yigido_map'); if(savedMap){ mapSelect.value=savedMap; } const savedGuide=localStorage.getItem('yigido_guide'); if(savedGuide!==null){ guideToggle.checked = savedGuide==='1'; } }catch{}
+  try{ const savedBg=localStorage.getItem('yigido_snake_bg'); if(savedBg){ bgSelect.value=savedBg; applyBg(savedBg);} else { applyBg('grid'); } const savedSnake=localStorage.getItem('yigido_snake_color'); if(savedSnake){ snakeColorInput.value=savedSnake; } const savedFood=localStorage.getItem('yigido_food_color'); if(savedFood){ foodColorInput.value=savedFood; } const savedWall=localStorage.getItem('yigido_wall_mode'); if(savedWall){ wallSelect.value=savedWall; } const savedPattern=localStorage.getItem('yigido_pattern'); if(savedPattern){ patternSelect.value=savedPattern; } const savedFoodShape=localStorage.getItem('yigido_food_shape'); if(savedFoodShape){ foodShapeSelect.value=savedFoodShape; } const savedDiff=localStorage.getItem('yigido_diff'); if(savedDiff){ difficultySelect.value=savedDiff; } const savedMap=localStorage.getItem('yigido_map'); if(savedMap){ mapSelect.value=savedMap; }
+    // 'box' haritası kaldırıldıysa güvenli değere düş
+    if(!['none','plus','maze1'].includes(mapSelect.value)){ mapSelect.value='none'; try{ localStorage.setItem('yigido_map','none'); }catch{} } const savedSound=localStorage.getItem('yigido_snake_sound'); if(savedSound!==null){ soundOn = savedSound==='1'; } const savedGuide=localStorage.getItem('yigido_guide'); if(savedGuide!==null){ guideToggle.checked = savedGuide==='1'; } }catch{}
   applySnakeColor(snakeColorInput.value); applyFoodColor(foodColorInput.value); applyWallMode(wallSelect.value); obstacles=buildMap(mapSelect.value);
 
   btnStartMain.addEventListener('click',start); btnStartOverlay.addEventListener('click',start); btnRestart.addEventListener('click',()=>{ restart(); }); btnPause.addEventListener('click',()=>{ pause(); }); btnHow.addEventListener('click',()=>{ alert('Amaç: Yemi yiyerek büyümek. Zorluk seçimi hızı etkiler. Haritalarda engellere çarparsan oyun biter. Sürpriz yem ve partikül efektleri varsayılan olarak açıktır. 10 sn içinde 3 yem = COMBO +5.'); });
